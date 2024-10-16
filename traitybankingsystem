@@ -1,0 +1,109 @@
+use std::collections::HashMap;
+
+trait Account {
+    fn deposit(&mut self, amount: f64);
+    fn withdraw(&mut self, amount: f64);
+    fn check_balance(&self) -> f64;
+}
+
+struct SavingsAccount {
+    balance: f64,
+    interest_rate: f64,
+}
+
+struct CheckingAccount {
+    balance: f64,
+    overdraft_limit: f64,
+}
+
+impl Account for SavingsAccount {
+    fn deposit(&mut self, amount: f64) {
+        self.balance += amount;
+        println!("Deposited ${:.2} into Savings Account. New balance: ${:.2}", amount, self.balance);
+    }
+
+    fn withdraw(&mut self, amount: f64) {
+        if self.balance >= amount {
+            self.balance -= amount;
+            println!("Withdrew ${:.2} from Savings Account. New balance: ${:.2}", amount, self.balance);
+        } else {
+            println!("Insufficient funds in Savings Account.");
+        }
+    }
+
+    fn check_balance(&self) -> f64 {
+        self.balance
+    }
+}
+
+impl Account for CheckingAccount {
+    fn deposit(&mut self, amount: f64) {
+        self.balance += amount;
+        println!("Deposited ${:.2} into Checking Account. New balance: ${:.2}", amount, self.balance);
+    }
+
+    fn withdraw(&mut self, amount: f64) {
+        if self.balance + self.overdraft_limit >= amount {
+            self.balance -= amount;
+            println!("Withdrew ${:.2} from Checking Account. New balance: ${:.2}", amount, self.balance);
+        } else {
+            println!("Exceeded overdraft limit in Checking Account.");
+        }
+    }
+
+    fn check_balance(&self) -> f64 {
+        self.balance
+    }
+}
+
+struct Bank {
+    accounts: HashMap<String, Box<dyn Account>>,
+}
+
+impl Bank {
+    fn new() -> Bank {
+        Bank {
+            accounts: HashMap::new(),
+        }
+    }
+
+    fn add_account(&mut self, id: String, account: Box<dyn Account>) {
+        self.accounts.insert(id, account);
+    }
+
+    fn get_account(&mut self, id: &str) -> Option<&mut Box<dyn Account>> {
+        self.accounts.get_mut(id)
+    }
+}
+
+fn main() {
+    let mut bank = Bank::new();
+
+    // Create accounts
+    let savings = Box::new(SavingsAccount {
+        balance: 1000.0,
+        interest_rate: 0.03,
+    });
+
+    let checking = Box::new(CheckingAccount {
+        balance: 500.0,
+        overdraft_limit: 200.0,
+    });
+
+    // Add accounts to bank
+    bank.add_account("savings1".to_string(), savings);
+    bank.add_account("checking1".to_string(), checking);
+
+    // Deposit and withdraw from accounts
+    if let Some(account) = bank.get_account("savings1") {
+        account.deposit(200.0);
+        account.withdraw(100.0);
+        println!("Savings Account balance: ${:.2}", account.check_balance());
+    }
+
+    if let Some(account) = bank.get_account("checking1") {
+        account.deposit(300.0);
+        account.withdraw(900.0);
+        println!("Checking Account balance: ${:.2}", account.check_balance());
+    }
+}
